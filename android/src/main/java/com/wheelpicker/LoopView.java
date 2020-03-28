@@ -377,6 +377,9 @@ public class LoopView extends View {
         paintB.setColor(color);
     }
 
+    public final void setSelectedItemBgColor(int color) {
+        //paintB.setColor(color);
+    }
     public final void setSelectedItemTextSize(int textSize) {
         float scaledSizeInPixels = textSize * getResources().getDisplayMetrics().scaledDensity;
         paintB.setTextSize(scaledSizeInPixels);
