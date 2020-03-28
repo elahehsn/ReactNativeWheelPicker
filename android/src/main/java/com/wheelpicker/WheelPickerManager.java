@@ -1,29 +1,26 @@
-package com.elahehsn.myapplication.wheelpicker;
+package com.wheelpicker;
 
-
-import android.content.Context;
-import android.graphics.Canvas;
+/**
+ * Created by Eleken. on 13.12.16.
+ */
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.os.Build;
-import android.os.Handler;
-import android.util.AttributeSet;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.RelativeLayout;
+import android.util.Log;
 
-import com.elahehsn.myapplication.R;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.uimanager.annotations.ReactProp;
+import com.facebook.react.uimanager.SimpleViewManager;
+import com.facebook.react.uimanager.ThemedReactContext;
+import com.facebook.react.uimanager.events.RCTEventEmitter;
+import com.facebook.react.views.text.ReactFontManager;
 
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
-public class LoopView extends View {
+public class WheelPickerManager extends SimpleViewManager<LoopView> implements LoopListener{
     ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> mFuture;
     int totalScrollY;
@@ -444,6 +441,4 @@ public class LoopView extends View {
         invalidate();
         smoothScroll();
     }
-
 }
-
