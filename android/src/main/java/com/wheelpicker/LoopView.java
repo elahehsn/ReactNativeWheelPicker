@@ -195,7 +195,7 @@ public class LoopView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        drawCenterBg(canvas, paintB1,firstLineY,secondLineY);
+        drawCenterBg(canvas, paintB1,firstLineY,secondLineY + 5);
         String as[];
         if (arrayList == null) {
             super.onDraw(canvas);
@@ -278,7 +278,6 @@ public class LoopView extends View {
                     canvas.save();
                     canvas.clipRect(0, 0, measuredWidth, secondLineY - translateY);
                     drawCenter(canvas, paintB, as[j1], maxTextHeight);
-                    //drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
                     canvas.restore();
                     canvas.save();
                     canvas.clipRect(0, secondLineY - translateY, measuredWidth, (int) (itemHeight));
@@ -287,7 +286,6 @@ public class LoopView extends View {
                 } else if (translateY >= firstLineY && maxTextHeight + translateY <= secondLineY) {
                     canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
                     drawCenter(canvas, paintB, as[j1],maxTextHeight);
-                   // drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
                     selectedItem = arrayList.indexOf(as[j1]);
                 } else {
                     canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
