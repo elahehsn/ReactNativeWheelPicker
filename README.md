@@ -111,6 +111,7 @@ module.exports = MyPicker;
 | selectedItemTextColor | black | `string` | Wheel Picker's selected Item text color  |
 | selectedItemTextSize | 16 | `number` | Wheel Picker's selected Item text size  |
 | selectedItemTextFontFamily | - | `font-family` | Wheel Picker's selected Item font  |
+| selectedBackgroundColor | - | `string` | Wheel Picker's selected background color |
 | itemTextColor | grey | `string` | Wheel Picker's Item Text Color  |
 | itemTextSize | 16 | `number` | Wheel Picker's Item text size  |
 | itemTextFontFamily | - | `font-family` | Wheel Picker's Item font  |
