@@ -12,6 +12,7 @@ import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
