@@ -31,6 +31,7 @@ public class LoopView extends View {
     Context context;
     Paint paintA;  //paint that draw top and bottom text
     Paint paintB;  // paint that draw center text
+    Paint paintB1;  // paint that draw center text
     Paint paintC;  // paint that draw line besides center text
     ArrayList arrayList;
     int textSize;
@@ -39,6 +40,7 @@ public class LoopView extends View {
     int colorGray;
     int colorBlack;
     int colorGrayLight;
+    int colorWhite;
     float lineSpacingMultiplier;
     boolean isLoop;
     int firstLineY;
@@ -75,6 +77,7 @@ public class LoopView extends View {
         colorGray = 0xffafafaf;
         colorBlack = 0xff313131;
         colorGrayLight = 0xffc5c5c5;
+        colorWhite = 0xffffffff;
         lineSpacingMultiplier = 2.0F;
         isLoop = false;
         initPosition = 0;
@@ -92,6 +95,11 @@ public class LoopView extends View {
         paintA.setColor(colorGrayLight);
         paintB = new Paint();
         paintB.setTextSize(textSize);
+
+        paintB1=new Paint();
+        paintB1.setColor(colorWhite);
+       // paintB1.setStyle(Paint.Style.FILL);
+
         paintC = new Paint();
         paintA.setTextSize(textSize);
         if (android.os.Build.VERSION.SDK_INT >= 11) {
@@ -116,6 +124,7 @@ public class LoopView extends View {
         paintA.setAntiAlias(true);
         paintB.setAntiAlias(true);
         paintC.setAntiAlias(true);
+        paintB1.setAntiAlias(true);
         paintC.setTypeface(Typeface.MONOSPACE);
         paintC.setTextSize(textSize);
         measureTextWidthHeight();
@@ -185,6 +194,7 @@ public class LoopView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        drawCenterBg(canvas, paintB1,"", maxTextHeight);
         String as[];
         if (arrayList == null) {
             super.onDraw(canvas);
@@ -247,6 +257,7 @@ public class LoopView extends View {
             } else {
                 int translateY = (int) (radius - Math.cos(radian) * radius - (Math.sin(radian) * maxTextHeight) / 2D);
                 canvas.translate(0.0F, translateY);
+
                 canvas.scale(1.0F, (float) Math.sin(radian));
                 if (translateY <= firstLineY && maxTextHeight + translateY >= firstLineY) {
                     canvas.save();
@@ -256,12 +267,14 @@ public class LoopView extends View {
                     canvas.restore();
                     canvas.save();
                     canvas.clipRect(0, firstLineY - translateY, measuredWidth, (int) (itemHeight));
-                    drawCenter(canvas, paintB, as[j1], maxTextHeight);
+                   // drawCenter(canvas, paintB, as[j1], maxTextHeight);
+                   //
                     canvas.restore();
                 } else if (translateY <= secondLineY && maxTextHeight + translateY >= secondLineY) {
                     canvas.save();
                     canvas.clipRect(0, 0, measuredWidth, secondLineY - translateY);
                     drawCenter(canvas, paintB, as[j1], maxTextHeight);
+                    //drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
                     canvas.restore();
                     canvas.save();
                     canvas.clipRect(0, secondLineY - translateY, measuredWidth, (int) (itemHeight));
@@ -270,6 +283,7 @@ public class LoopView extends View {
                 } else if (translateY >= firstLineY && maxTextHeight + translateY <= secondLineY) {
                     canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
                     drawCenter(canvas, paintB, as[j1],maxTextHeight);
+                   // drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
                     selectedItem = arrayList.indexOf(as[j1]);
                 } else {
                     canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
@@ -291,6 +305,16 @@ public class LoopView extends View {
         paint.getTextBounds(text, 0, text.length(), r);
         float x = cWidth / 2f - r.width() / 2f - r.left;
         canvas.drawText(text, x, y, paint);
+    }
+
+    private void drawCenterBg(Canvas canvas, Paint paint, String text, int y) {
+        canvas.getClipBounds(r);
+        int cWidth = r.width();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            canvas.drawRoundRect(20,80,cWidth - 20,150, 20, 20 , paint);
+        } else {
+            canvas.drawRect(20,80,cWidth - 20,150,paint);
+        }
     }
 
     @Override
@@ -378,8 +402,9 @@ public class LoopView extends View {
     }
 
     public final void setSelectedItemBgColor(int color) {
-        //paintB.setColor(color);
+        paintB1.setColor(color);
     }
+
     public final void setSelectedItemTextSize(int textSize) {
         float scaledSizeInPixels = textSize * getResources().getDisplayMetrics().scaledDensity;
         paintB.setTextSize(scaledSizeInPixels);
