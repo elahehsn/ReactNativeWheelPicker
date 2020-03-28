@@ -261,7 +261,7 @@ public class LoopView extends View {
                 canvas.translate(0.0F, translateY);
 
                 canvas.scale(1.0F,1.0F);
-                paintA.setAlpha((int)((float) Math.sin(radian)*100));
+//                paintA.setAlpha((int)((float) Math.sin(radian)*100));
 
                 if (translateY <= firstLineY && maxTextHeight + translateY >= firstLineY) {
                     canvas.save();
