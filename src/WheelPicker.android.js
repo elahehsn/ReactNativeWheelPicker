@@ -13,6 +13,7 @@ type Props = {
   isCyclic?: boolean,
   selectedItemTextColor?: string,
   selectedItemTextSize?: number,
+  selectedBackgroundColor?: string,
   indicatorWidth?: number,
   hideIndicator?: boolean,
   indicatorColor?: string,

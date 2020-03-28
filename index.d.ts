@@ -5,6 +5,7 @@ interface IStyle {
 	selectedItemTextColor?: string;
 	selectedItemTextSize?: number;
 	selectedItemTextFontFamily: string;
+	selectedBackgroundColor: string;
 	itemTextColor?: string;
 	itemTextSize?: number;
 	itemTextFontFamily: string;
