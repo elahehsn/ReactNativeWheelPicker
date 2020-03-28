@@ -79,7 +79,7 @@ public class LoopView extends View {
         colorBlack = 0xff313131;
         colorGrayLight = 0xffc5c5c5;
         colorWhite = 0xffffffff;
-        lineSpacingMultiplier = 2.0F;
+        lineSpacingMultiplier = 2.3F;
         isLoop = false;
         initPosition = 0;
         itemCount = 7;
@@ -195,7 +195,7 @@ public class LoopView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        drawCenterBg(canvas, paintB1,"", maxTextHeight);
+        drawCenterBg(canvas, paintB1,firstLineY,secondLineY);
         String as[];
         if (arrayList == null) {
             super.onDraw(canvas);
@@ -245,6 +245,7 @@ public class LoopView extends View {
         }
         canvas.drawLine(0.0F, firstLineY, measuredWidth, firstLineY, paintC);
         canvas.drawLine(0.0F, secondLineY, measuredWidth, secondLineY, paintC);
+
         int j1 = 0;
         while (j1 < itemCount) {
             canvas.save();
@@ -259,7 +260,9 @@ public class LoopView extends View {
                 int translateY = (int) (radius - Math.cos(radian) * radius - (Math.sin(radian) * maxTextHeight) / 2D);
                 canvas.translate(0.0F, translateY);
 
-                canvas.scale(1.0F, (float) Math.sin(radian));
+                canvas.scale(1.0F,1.0F);
+                paintA.setAlpha((int)((float) Math.sin(radian)*100));
+
                 if (translateY <= firstLineY && maxTextHeight + translateY >= firstLineY) {
                     canvas.save();
                     //top = 0,left = (measuredWidth - maxTextWidth)/2
@@ -308,13 +311,13 @@ public class LoopView extends View {
         canvas.drawText(text, x, y, paint);
     }
 
-    private void drawCenterBg(Canvas canvas, Paint paint, String text, int y) {
+    private void drawCenterBg(Canvas canvas, Paint paint, int top,int bottom) {
         canvas.getClipBounds(r);
         int cWidth = r.width();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            canvas.drawRoundRect(20,80,cWidth - 20,150, 20, 20 , paint);
+            canvas.drawRoundRect(20,top,cWidth - 20,bottom, 30, 30 , paint);
         } else {
-            canvas.drawRect(20,80,cWidth - 20,150,paint);
+            canvas.drawRect(20,top,cWidth - 20,bottom,paint);
         }
     }
 
@@ -445,5 +448,4 @@ public class LoopView extends View {
         invalidate();
         smoothScroll();
     }
-
 }
