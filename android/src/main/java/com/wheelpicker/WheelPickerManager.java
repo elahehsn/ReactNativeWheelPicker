@@ -1,189 +1,449 @@
-package com.wheelpicker;
+package com.elahehsn.myapplication.wheelpicker;
 
-/**
- * Created by Eleken. on 13.12.16.
- */
+
+import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.util.Log;
+import android.os.Build;
+import android.os.Handler;
+import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.RelativeLayout;
 
-import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.ReactContext;
-import com.facebook.react.bridge.ReadableArray;
-import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.uimanager.annotations.ReactProp;
-import com.facebook.react.uimanager.SimpleViewManager;
-import com.facebook.react.uimanager.ThemedReactContext;
-import com.facebook.react.uimanager.events.RCTEventEmitter;
-import com.facebook.react.views.text.ReactFontManager;
+import com.elahehsn.myapplication.R;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-public class WheelPickerManager extends SimpleViewManager<LoopView> implements LoopListener{
-    LoopView wheelPicker;
-    public static final String REACT_CLASS = "WheelPicker";
+public class LoopView extends RelativeLayout {
+    ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> mFuture;
+    int totalScrollY;
+    Handler handler;
+    LoopListener loopListener;
+    private GestureDetector gestureDetector;
+    private int selectedItem;
+    private GestureDetector.SimpleOnGestureListener simpleOnGestureListener;
+    Context context;
+    Paint paintA;  //paint that draw top and bottom text
+    Paint paintB;  // paint that draw center text
+    Paint paintB1;  // paint that draw center text
+    Paint paintC;  // paint that draw line besides center text
+    ArrayList arrayList;
+    int textSize;
+    int maxTextWidth;
+    int maxTextHeight;
+    int colorGray;
+    int colorBlack;
+    int colorGrayLight;
+    int colorWhite;
+    float lineSpacingMultiplier;
+    boolean isLoop;
+    int firstLineY;
+    int secondLineY;
+    int preCurrentIndex;
+    int initPosition;
+    int itemCount;
+    int measuredHeight;
+    int halfCircumference;
+    int radius;
+    int measuredWidth;
+    int change;
+    float y1;
+    float y2;
+    float dy;
 
-    @Override
-    public String getName() {
-        return REACT_CLASS;
+    public LoopView(Context context) {
+        super(context);
+        initLoopView(context);
+    }
+
+    public LoopView(Context context, AttributeSet attributeset) {
+        super(context, attributeset);
+        initLoopView(context);
+    }
+
+    public LoopView(Context context, AttributeSet attributeset, int defStyleAttr) {
+        super(context, attributeset, defStyleAttr);
+        initLoopView(context);
+    }
+
+    private void initLoopView(Context context) {
+        textSize = 0;
+        colorGray = 0xffafafaf;
+        colorBlack = 0xff313131;
+        colorGrayLight = 0xffc5c5c5;
+        colorWhite = 0xffffffff;
+        lineSpacingMultiplier = 2.0F;
+        isLoop = false;
+        initPosition = 0;
+        itemCount = 7;
+        y1 = 0.0F;
+        y2 = 0.0F;
+        dy = 0.0F;
+        totalScrollY = 0;
+        simpleOnGestureListener = new LoopViewGestureListener(this);
+        handler = new MessageHandler(this);
+        this.context = context;
+        setTextSize(16F);
+
+        paintA = new Paint();
+        paintA.setColor(colorGrayLight);
+        paintB = new Paint();
+        paintB.setTextSize(textSize);
+
+        paintB1=new Paint();
+        paintB1.setColor(colorWhite);
+       // paintB1.setStyle(Paint.Style.FILL);
+
+        paintC = new Paint();
+        paintA.setTextSize(textSize);
+        if (android.os.Build.VERSION.SDK_INT >= 11) {
+            setLayerType(LAYER_TYPE_SOFTWARE, null);
+        }
+        gestureDetector = new GestureDetector(context, simpleOnGestureListener);
+        gestureDetector.setIsLongpressEnabled(false);
+    }
+
+    static int getSelectedItem(LoopView loopview) {
+        return loopview.selectedItem;
+    }
+
+    static void smoothScroll(LoopView loopview) {
+        loopview.smoothScroll();
+    }
+
+    private void initData() {
+        if (arrayList == null) {
+            return;
+        }
+        paintA.setAntiAlias(true);
+        paintB.setAntiAlias(true);
+        paintC.setAntiAlias(true);
+        paintB1.setAntiAlias(true);
+        paintC.setTypeface(Typeface.MONOSPACE);
+        paintC.setTextSize(textSize);
+        measureTextWidthHeight();
+        halfCircumference = (int) (maxTextHeight * lineSpacingMultiplier * (itemCount - 1));
+        measuredHeight = (int) ((halfCircumference * 2) / Math.PI);
+        radius = (int) (halfCircumference / Math.PI);
+        firstLineY = (int) ((measuredHeight - lineSpacingMultiplier * maxTextHeight) / 2.0F);
+        secondLineY = (int) ((measuredHeight + lineSpacingMultiplier * maxTextHeight) / 2.0F);
+        if (initPosition == -1) {
+            if (isLoop) {
+                initPosition = (arrayList.size() + 1) / 2;
+            } else {
+                initPosition = 0;
+            }
+        }
+        preCurrentIndex = initPosition;
+    }
+
+    private void measureTextWidthHeight() {
+        Rect rect = new Rect();
+        for (int i = 0; i < arrayList.size(); i++) {
+            String s1 = (String) arrayList.get(i);
+            paintB.getTextBounds(s1, 0, s1.length(), rect);
+            int textWidth = rect.width();
+            if (textWidth > maxTextWidth) {
+                maxTextWidth = textWidth;
+            }
+            paintB.getTextBounds("\u661F\u671F", 0, 2, rect); // 星期
+            int textHeight = rect.height();
+            if (textHeight > maxTextHeight) {
+                maxTextHeight = textHeight;
+            }
+        }
+
+    }
+
+
+    private void smoothScroll() {
+        int offset = (int) (totalScrollY % (lineSpacingMultiplier * maxTextHeight));
+        cancelFuture();
+        mFuture = mExecutor.scheduleWithFixedDelay(new MTimer(this, offset), 0, 10, TimeUnit.MILLISECONDS);
+    }
+
+    public void cancelFuture() {
+        if (mFuture!=null&&!mFuture.isCancelled()) {
+            mFuture.cancel(true);
+            mFuture = null;
+        }
+    }
+
+    public final int getSelectedItem() {
+        return selectedItem;
+    }
+
+    protected final void smoothScroll(float velocityY) {
+        cancelFuture();
+        int velocityFling = 20;
+        mFuture = mExecutor.scheduleWithFixedDelay(new LoopTimerTask(this, velocityY), 0, velocityFling, TimeUnit.MILLISECONDS);
+    }
+
+
+    protected final void itemSelected() {
+        if (loopListener != null) {
+            postDelayed(new LoopRunnable(this), 200L);
+        }
     }
 
     @Override
-    protected LoopView createViewInstance(ThemedReactContext context) {
-        wheelPicker = new LoopView(context);
-        wheelPicker.setListener(this);
-        return wheelPicker;
-    }
+    protected void onDraw(Canvas canvas) {
+        drawCenterBg(canvas, paintB1,"", maxTextHeight);
+        String as[];
+        if (arrayList == null) {
+            super.onDraw(canvas);
+            return;
+        }
+        as = new String[itemCount];
+        change = (int) (totalScrollY / (lineSpacingMultiplier * maxTextHeight));
+        preCurrentIndex = initPosition + change % arrayList.size();
+        if (!isLoop) {
+            if (preCurrentIndex < 0) {
+                preCurrentIndex = 0;
+            }
+            if (preCurrentIndex > arrayList.size() - 1) {
+                preCurrentIndex = arrayList.size() - 1;
+            }
+            // break;
+        } else {
+            if (preCurrentIndex < 0) {
+                preCurrentIndex = arrayList.size() + preCurrentIndex;
+            }
+            if (preCurrentIndex > arrayList.size() - 1) {
+                preCurrentIndex = preCurrentIndex - arrayList.size();
+            }
+            // continue;
+        }
 
-    @ReactProp(name = "data")
-    public void setData(LoopView wheelPicker, ReadableArray data) {
-        if (wheelPicker!=null){
-            List<String> emptyList = new ArrayList<>();
-            try {
-                List<Integer> dataInt = new ArrayList<>();
-                for (int i = 0; i <data.size() ; i++) {
-                    dataInt.add(data.getInt(i));
+        int j2 = (int) (totalScrollY % (lineSpacingMultiplier * maxTextHeight));
+        int k1 = 0;
+        while (k1 < itemCount) {
+            int l1 = preCurrentIndex - (itemCount / 2 - k1);
+            if (isLoop) {
+                if (l1 < 0) {
+                    l1 = l1 + arrayList.size();
                 }
-                wheelPicker.setArrayList((ArrayList) dataInt);
-            } catch (Exception e){
-                try {
-                    List<String> dataString = new ArrayList<>();
-                    for (int i = 0; i <data.size() ; i++) {
-                        dataString.add(data.getString(i));
+                if (l1 > arrayList.size() - 1) {
+                    l1 = l1 - arrayList.size();
+                }
+                as[k1] = (String) arrayList.get(l1);
+            } else if (l1 < 0) {
+                as[k1] = "";
+            } else if (l1 > arrayList.size() - 1) {
+                as[k1] = "";
+            } else {
+                as[k1] = (String) arrayList.get(l1);
+            }
+            k1++;
+        }
+        canvas.drawLine(0.0F, firstLineY, measuredWidth, firstLineY, paintC);
+        canvas.drawLine(0.0F, secondLineY, measuredWidth, secondLineY, paintC);
+        int j1 = 0;
+        while (j1 < itemCount) {
+            canvas.save();
+            // L=α* r
+            // (L * π ) / (π * r)
+            float itemHeight = maxTextHeight * lineSpacingMultiplier;
+            double radian = ((itemHeight * j1 - j2) * Math.PI) / halfCircumference;
+            float angle = (float) (90D - (radian / Math.PI) * 180D);
+            if (angle >= 90F || angle <= -90F) {
+                canvas.restore();
+            } else {
+                int translateY = (int) (radius - Math.cos(radian) * radius - (Math.sin(radian) * maxTextHeight) / 2D);
+                canvas.translate(0.0F, translateY);
+
+                canvas.scale(1.0F, (float) Math.sin(radian));
+                if (translateY <= firstLineY && maxTextHeight + translateY >= firstLineY) {
+                    canvas.save();
+                    //top = 0,left = (measuredWidth - maxTextWidth)/2
+                    canvas.clipRect(0, 0, measuredWidth, firstLineY - translateY);
+                    drawCenter(canvas, paintA, as[j1],maxTextHeight);
+                    canvas.restore();
+                    canvas.save();
+                    canvas.clipRect(0, firstLineY - translateY, measuredWidth, (int) (itemHeight));
+                   // drawCenter(canvas, paintB, as[j1], maxTextHeight);
+                   //
+                    canvas.restore();
+                } else if (translateY <= secondLineY && maxTextHeight + translateY >= secondLineY) {
+                    canvas.save();
+                    canvas.clipRect(0, 0, measuredWidth, secondLineY - translateY);
+                    drawCenter(canvas, paintB, as[j1], maxTextHeight);
+                    //drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
+                    canvas.restore();
+                    canvas.save();
+                    canvas.clipRect(0, secondLineY - translateY, measuredWidth, (int) (itemHeight));
+                    drawCenter(canvas, paintA, as[j1],maxTextHeight);
+                    canvas.restore();
+                } else if (translateY >= firstLineY && maxTextHeight + translateY <= secondLineY) {
+                    canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
+                    drawCenter(canvas, paintB, as[j1],maxTextHeight);
+                   // drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
+                    selectedItem = arrayList.indexOf(as[j1]);
+                } else {
+                    canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
+                    drawCenter(canvas, paintA, as[j1],maxTextHeight);
+                }
+                canvas.restore();
+            }
+            j1++;
+        }
+        super.onDraw(canvas);
+    }
+
+    private Rect r = new Rect();
+
+    private void drawCenter(Canvas canvas, Paint paint, String text, int y) {
+        canvas.getClipBounds(r);
+        int cWidth = r.width();
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.getTextBounds(text, 0, text.length(), r);
+        float x = cWidth / 2f - r.width() / 2f - r.left;
+        canvas.drawText(text, x, y, paint);
+    }
+
+    private void drawCenterBg(Canvas canvas, Paint paint, String text, int y) {
+        canvas.getClipBounds(r);
+        int cWidth = r.width();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            canvas.drawRoundRect(20,80,cWidth - 20,150, 20, 20 , paint);
+        } else {
+            canvas.drawRect(20,80,cWidth - 20,150,paint);
+        }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        initData();
+        measuredWidth = getMeasuredWidth();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent motionevent) {
+        switch (motionevent.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                y1 = motionevent.getRawY();
+                if (getParent() != null) {
+                  getParent().requestDisallowInterceptTouchEvent(true);
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                y2 = motionevent.getRawY();
+                dy = y1 - y2;
+                y1 = y2;
+                totalScrollY = (int) ((float) totalScrollY + dy);
+                if (!isLoop) {
+                    int initPositionCircleLength = (int) (initPosition * (lineSpacingMultiplier * maxTextHeight));
+                    int initPositionStartY = -1 * initPositionCircleLength;
+                    if (totalScrollY < initPositionStartY) {
+                        totalScrollY = initPositionStartY;
                     }
-                    wheelPicker.setArrayList((ArrayList) dataString);
-                } catch (Exception ex){
-                    ex.printStackTrace();
-                    wheelPicker.setArrayList((ArrayList) emptyList);
                 }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+            default:
+                if (!gestureDetector.onTouchEvent(motionevent) && motionevent.getAction() == MotionEvent.ACTION_UP) {
+                    smoothScroll();
+                }
+                if (getParent() != null) {
+                  getParent().requestDisallowInterceptTouchEvent(false);
+                }
+                return true;
+        }
+
+        if (!isLoop) {
+            int circleLength = (int) ((float) (arrayList.size() - 1 - initPosition) * (lineSpacingMultiplier * maxTextHeight));
+            if (totalScrollY >= circleLength) {
+                totalScrollY = circleLength;
             }
         }
+        invalidate();
+
+        if (!gestureDetector.onTouchEvent(motionevent) && motionevent.getAction() == MotionEvent.ACTION_UP) {
+            smoothScroll();
+        }
+        return true;
     }
 
-    @ReactProp(name = "isCyclic")
-    public void setCyclic(LoopView wheelPicker, Boolean isCyclic) {
-        if (wheelPicker!=null){
-            wheelPicker.setLoop(isCyclic);
+    // Picker methods
+    public final void setLoop(boolean isCyclic) {
+        isLoop = isCyclic;
+    }
+
+    public final void setTextSize(float size) {
+        if (size > 0.0F) {
+            textSize = (int) (context.getResources().getDisplayMetrics().density * size);
         }
     }
 
-    @ReactProp(name = "selectedItemTextColor")
-    public void setSelectedItemTextColor(LoopView wheelPicker, String selectedItemTextColor) {
-        if (wheelPicker!=null){
-            wheelPicker.setSelectedItemTextColor(convertColor(selectedItemTextColor));
-        }
+    public final void setInitPosition(int initPosition) {
+        this.initPosition = initPosition;
     }
 
-
-    @ReactProp(name = "selectedItemTextSize")
-    public void setSelectedItemTextSize(LoopView wheelPicker, int itemTextSize) {
-        if (wheelPicker!=null){
-            wheelPicker.setSelectedItemTextSize(itemTextSize);
-        }
+    public final void setListener(LoopListener LoopListener) {
+        loopListener = LoopListener;
     }
 
-    @ReactProp(name = "selectedItemTextFontFamily")
-    public void setSelectedItemFont(LoopView wheelPicker, String itemTextFontFamily) {
-        if (wheelPicker!=null){
-            Typeface typeface = ReactFontManager.getInstance().getTypeface(itemTextFontFamily, Typeface.NORMAL, wheelPicker.getContext().getAssets());
-            wheelPicker.setSelectedItemFont(typeface);
-        }
+    public final void setArrayList(ArrayList arraylist) {
+        this.arrayList = arraylist;
+        initData();
+        invalidate();
     }
 
-    @ReactProp(name = "indicatorWidth")
-    public void setIndicatorWidth(LoopView wheelPicker, int indicatorSize) {
-        if (wheelPicker!=null){
-            wheelPicker.setIndicatorWidth(indicatorSize);
-        }
+    public final void setSelectedItemTextColor(int color) {
+        paintB.setColor(color);
     }
 
-    @ReactProp(name = "hideIndicator")
-    public void setIndicator(LoopView wheelPicker, Boolean renderIndicator) {
-        if (wheelPicker!=null){
-            wheelPicker.hideIndicator();
-        }
+    public final void setSelectedItemTextSize(int textSize) {
+        float scaledSizeInPixels = textSize * getResources().getDisplayMetrics().scaledDensity;
+        paintB.setTextSize(scaledSizeInPixels);
     }
 
-    @ReactProp(name = "indicatorColor")
-    public void setIndicatorColor(LoopView wheelPicker, String indicatorColor) {
-        if (wheelPicker!=null){
-            wheelPicker.setIndicatorColor(convertColor(indicatorColor));
-        }
+    public final void setSelectedItemFont(Typeface font) {
+        paintB.setTypeface(font);
     }
 
-    @ReactProp(name = "itemTextColor")
-    public void setItemTextColor(LoopView wheelPicker, String itemTextColor) {
-        if (wheelPicker!=null){
-            wheelPicker.setItemTextColor(convertColor(itemTextColor));
-        }
+    public final void setItemTextColor(int color) {
+        paintA.setColor(color);
     }
 
-    @ReactProp(name = "itemTextSize")
-    public void setItemTextSize(LoopView wheelPicker, int itemTextSize) {
-        if (wheelPicker!=null){
-            wheelPicker.setItemTextSize(itemTextSize);
-        }
+    public final void setItemTextSize(int textSize) {
+        float scaledSizeInPixels = textSize * getResources().getDisplayMetrics().scaledDensity;
+        paintA.setTextSize(scaledSizeInPixels);
     }
 
-    @ReactProp(name = "itemTextFontFamily")
-    public void setItemFont(LoopView wheelPicker, String itemTextFontFamily) {
-      if (wheelPicker!=null){
-        Typeface typeface = ReactFontManager.getInstance().getTypeface(itemTextFontFamily, Typeface.NORMAL, wheelPicker.getContext().getAssets());
-        wheelPicker.setItemFont(typeface);
-      }
+    public final void setItemFont(Typeface font) {
+        paintA.setTypeface(font);
     }
 
-    @ReactProp(name = "initPosition")
-    public void setInitialPosition(LoopView wheelPicker, int selectedItemPosition) {
-        if (wheelPicker!=null){
-            wheelPicker.setInitPosition(selectedItemPosition);
-        }
+    public final void setIndicatorColor(int color) {
+        paintC.setColor(color);
     }
 
-    @ReactProp(name = "backgroundColor")
-    public void setBackgroundColor(LoopView wheelPicker, String backgroundColor) {
-        if (wheelPicker!=null){
-            wheelPicker.setBackgroundColor(convertColor(backgroundColor));
-        }
+    public final void setIndicatorWidth(int width) {
+        paintC.setStrokeWidth(width);
     }
 
-
-    @ReactProp(name = "selectedItem")
-    public void setSelectedItem(LoopView wheelPicker, int pos) {
-        if (wheelPicker!=null){
-            wheelPicker.setSelectedItem(pos);
-        }
+    public final void hideIndicator() {
+        paintC.setColor(Color.TRANSPARENT);
     }
 
-
-    @Override
-    public void onItemSelect(LoopView picker, int item) {
-        if (wheelPicker != null){
-            WritableMap event = Arguments.createMap();
-            event.putInt("position", item);
-            ((ReactContext) wheelPicker.getContext()).getJSModule(RCTEventEmitter.class).receiveEvent(
-                    picker.getId(),
-                    "topChange",
-                    event);
-        }
+    public final void setSelectedItem(int position) {
+        totalScrollY = (int) ((float) (position - initPosition) * (lineSpacingMultiplier * maxTextHeight));
+        invalidate();
+        smoothScroll();
     }
 
-    private int convertColor(String color){
-        if (!color.startsWith("rgb")) {
-            return Color.parseColor(color);
-        } else  {
-            String[] colors = color.substring(color.indexOf("(") + 1, color.length() - 1 ).split(",");
-            int red = Integer.parseInt(colors[0].trim());
-            int green = Integer.parseInt(colors[1].trim());
-            int blue = Integer.parseInt(colors[2].trim());
-            double opacity = 1;
-            if (colors.length > 3){
-                opacity = Double.parseDouble(colors[3].trim());
-            }
-            int alpha = (int)(opacity * 255.0f);
-
-            return Color.argb(alpha,red,green,blue);
-        }
-    }
 }
+
