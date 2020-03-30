@@ -315,7 +315,7 @@ public class LoopView extends View {
         canvas.getClipBounds(r);
         int cWidth = r.width();
 
-        paint.setShadowLayer(10, 0, 10, 0x1a57368E);
+        paint.setShadowLayer(15, 0, 10, 0x1a57368E);
         setLayerType(LAYER_TYPE_SOFTWARE, paint);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
