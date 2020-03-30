@@ -77,7 +77,7 @@ public class LoopView extends View {
         textSize = 0;
         colorGray = 0xffafafaf;
         colorBlack = 0xff313131;
-        colorGrayLight = 0xffc5c5c5;
+        colorGrayLight = 0xffff0000;
         colorWhite = 0xffffffff;
         lineSpacingMultiplier = 2.3F;
         isLoop = false;
@@ -195,7 +195,7 @@ public class LoopView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        drawCenterBg(canvas, paintB1,firstLineY,secondLineY + 5);
+        drawCenterBg(canvas, paintB1,firstLineY,secondLineY);
         String as[];
         if (arrayList == null) {
             super.onDraw(canvas);
@@ -278,6 +278,7 @@ public class LoopView extends View {
                     canvas.save();
                     canvas.clipRect(0, 0, measuredWidth, secondLineY - translateY);
                     drawCenter(canvas, paintB, as[j1], maxTextHeight);
+                    //drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
                     canvas.restore();
                     canvas.save();
                     canvas.clipRect(0, secondLineY - translateY, measuredWidth, (int) (itemHeight));
@@ -286,6 +287,7 @@ public class LoopView extends View {
                 } else if (translateY >= firstLineY && maxTextHeight + translateY <= secondLineY) {
                     canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
                     drawCenter(canvas, paintB, as[j1],maxTextHeight);
+                   // drawCenterBg(canvas, paintB,as[j1], maxTextHeight);
                     selectedItem = arrayList.indexOf(as[j1]);
                 } else {
                     canvas.clipRect(0, 0, measuredWidth, (int) (itemHeight));
@@ -312,6 +314,10 @@ public class LoopView extends View {
     private void drawCenterBg(Canvas canvas, Paint paint, int top,int bottom) {
         canvas.getClipBounds(r);
         int cWidth = r.width();
+
+        paint.setShadowLayer(10, 0, 10, 0x1a57368E);
+        setLayerType(LAYER_TYPE_SOFTWARE, paint);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             canvas.drawRoundRect(20,top,cWidth - 20,bottom, 30, 30 , paint);
         } else {
