@@ -13,6 +13,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.os.Build;
+import android.graphics.BlurMaskFilter;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -33,6 +34,7 @@ public class LoopView extends View {
     Paint paintA;  //paint that draw top and bottom text
     Paint paintB;  // paint that draw center text
     Paint paintB1;  // paint that draw center text
+    Paint paintBg;  // paint that draw center text
     Paint paintC;  // paint that draw line besides center text
     ArrayList arrayList;
     int textSize;
@@ -100,6 +102,8 @@ public class LoopView extends View {
         paintB1=new Paint();
         paintB1.setColor(colorWhite);
        // paintB1.setStyle(Paint.Style.FILL);
+        paintBg=new Paint();
+        paintBg.setColor(colorWhite);
 
         paintC = new Paint();
         paintA.setTextSize(textSize);
@@ -126,6 +130,7 @@ public class LoopView extends View {
         paintB.setAntiAlias(true);
         paintC.setAntiAlias(true);
         paintB1.setAntiAlias(true);
+        paintBg.setAntiAlias(true);
         paintC.setTypeface(Typeface.MONOSPACE);
         paintC.setTextSize(textSize);
         measureTextWidthHeight();
@@ -195,6 +200,7 @@ public class LoopView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        drawCenterBgShadow(canvas, paintBg,firstLineY,secondLineY);
         drawCenterBg(canvas, paintB1,firstLineY,secondLineY);
         String as[];
         if (arrayList == null) {
@@ -311,15 +317,31 @@ public class LoopView extends View {
         canvas.drawText(text, x, y, paint);
     }
 
+    private Rect r2 = new Rect(); 
+    private void drawCenterBgShadow(Canvas canvas, Paint paint, int top,int bottom) {
+        canvas.getClipBounds(r2);
+        int cWidth = r2.width();
+        paint.setColor(0x5957368E);
+        paint.setMaskFilter(new BlurMaskFilter(7, BlurMaskFilter.Blur.NORMAL));
+        // paint.setShadowLayer(15, 0, 10, 0x1a57368E);
+        setLayerType(LAYER_TYPE_SOFTWARE, paint);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            canvas.drawRoundRect(35,top + 10,cWidth - 35,bottom + 8, 20, 20 , paint);
+        } else {
+            canvas.drawRect(35,top + 10,cWidth - 35,bottom + 8,paint);
+        }
+    }
+
     private void drawCenterBg(Canvas canvas, Paint paint, int top,int bottom) {
         canvas.getClipBounds(r);
         int cWidth = r.width();
 
-        paint.setShadowLayer(15, 0, 10, 0x1a57368E);
+        // paint.setShadowLayer(15, 0, 10, 0x1a57368E);
         setLayerType(LAYER_TYPE_SOFTWARE, paint);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            canvas.drawRoundRect(20,top,cWidth - 20,bottom, 30, 30 , paint);
+            canvas.drawRoundRect(20,top,cWidth - 20,bottom, 20, 20 , paint);
         } else {
             canvas.drawRect(20,top,cWidth - 20,bottom,paint);
         }
